@@ -1,0 +1,24 @@
+# First stage: Build the binary
+FROM rust:latest as builder
+
+WORKDIR /app
+
+# Copy Cargo files first to leverage Docker cache
+COPY Cargo.toml Cargo.lock ./
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo build --release && rm -rf src
+
+# Copy the actual source code and build again
+COPY . .
+RUN cargo build --release
+
+# Second stage: Create minimal runtime image
+FROM debian:bullseye-slim
+
+WORKDIR /app
+
+# Copy compiled binary from builder stage
+COPY --from=builder /app/target/release/my_binary /app/back
+
+# Set binary as entrypoint
+ENTRYPOINT ["/app/my_binary"]
