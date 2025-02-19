@@ -45,7 +45,7 @@ fn get_random_row(file_path: &str, _seed: usize) -> Result<Bird, Box<dyn Error>>
 
 async fn bird() -> impl Responder {
     // Generate a random seed for the bird selection
-    let seed: u32 = rand::thread_rng().gen_range(2..=25);
+    let seed: u32 = rand::thread_rng().gen_range(2..=50);
     //println!("Current directory: {:?}", env::current_dir());
     // Get a random bird from CSV
     match get_random_row("./birds.csv", seed as usize) {

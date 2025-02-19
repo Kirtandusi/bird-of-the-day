@@ -3,6 +3,8 @@ FROM rust:latest as builder
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y libc6
+
 # Copy Cargo files first to leverage Docker cache
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
@@ -18,7 +20,7 @@ FROM debian:bullseye-slim
 WORKDIR /app
 
 # Copy compiled binary from builder stage
-COPY --from=builder /app/target/release/main /app/main
+COPY --from=builder /app/target/release/back /app/back
 
 # Set binary as entrypoint
-ENTRYPOINT ["/app/main"]
+ENTRYPOINT ["/app/back"]
