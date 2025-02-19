@@ -18,7 +18,7 @@ FROM debian:bullseye-slim
 WORKDIR /app
 
 # Copy compiled binary from builder stage
-COPY --from=builder /app/target/release/my_binary /app/back
+COPY --from=builder /app/target/release/main /app/main
 
 # Set binary as entrypoint
-ENTRYPOINT ["/app/my_binary"]
+ENTRYPOINT ["/app/main"]
