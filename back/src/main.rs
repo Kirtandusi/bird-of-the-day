@@ -4,12 +4,10 @@ use serde::Serialize;
 use csv::ReaderBuilder;
 use rand::seq::SliceRandom;
 use std::error::Error;
+use actix_cors::Cors;
 use actix_web::middleware::Logger;
-use actix_web::http::header;
-use actix_web::dev::ServiceRequest;
-use actix_web::dev::ServiceResponse;
-use actix_web::middleware::Transform;
-use futures::future::{ok, Ready};
+
+//use std::env;
 
 #[derive(Serialize, Clone)]
 struct Bird {
@@ -62,38 +60,18 @@ async fn generate_random_number() -> impl Responder {
     format!("Random number: {}", random_number)
 }
 
-fn cors_middleware<S, B>(
-    req: ServiceRequest,
-    srv: &S,
-) -> impl futures::Future<Output = Result<ServiceResponse<B>, actix_web::Error>>
-where
-    S: Transform<ServiceRequest, Response = ServiceResponse<B>, Error = actix_web::Error>,
-{
-    let headers = req.headers().clone();
-    let origin = headers.get(header::ORIGIN).cloned();
-
-    let fut = srv.call(req);
-
-    async move {
-        let mut res = fut.await?;
-
-        if let Some(origin) = origin {
-            res.headers_mut().insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
-            res.headers_mut().insert(header::ACCESS_CONTROL_ALLOW_METHODS, header::HeaderValue::from_static("GET, POST"));
-            res.headers_mut().insert(header::ACCESS_CONTROL_ALLOW_HEADERS, header::HeaderValue::from_static("content-type"));
-            res.headers_mut().insert(header::ACCESS_CONTROL_MAX_AGE, header::HeaderValue::from_static("3600"));
-        }
-
-        Ok(res)
-    }
-}
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(Logger::default())  // Optional: for logging requests
-            .wrap_fn(cors_middleware)
+            .wrap(
+                Cors::default()
+                    .allowed_origin("http://localhost:3000")
+                    .allowed_methods(vec!["GET", "POST"])
+                    .allowed_headers(vec!["content-type"])
+                    .max_age(3600),
+            )
             .route("/random", web::get().to(generate_random_number)) // test endpoint
             .route("/bird", web::get().to(bird)) // endpoint to get random bird
     })
@@ -101,3 +79,4 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
+
