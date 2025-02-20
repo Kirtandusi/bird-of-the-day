@@ -1,13 +1,11 @@
 use actix_web::{web, App, HttpServer, HttpResponse, Responder};
 use rand::Rng;
 use serde::Serialize;
-use csv::ReaderBuilder;
 use rand::seq::SliceRandom;
-use std::error::Error;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
-
-//use std::env;
+use chrono::{Utc, Datelike};
+use rand::{SeedableRng, rngs::StdRng};
 
 #[derive(Serialize, Clone)]
 struct Bird {
@@ -16,8 +14,8 @@ struct Bird {
     description: String,
 }
 
-fn get_random_row(file_path: &str, _seed: usize) -> Result<Bird, Box<dyn Error>> {
-    let mut rdr = ReaderBuilder::new().has_headers(true).from_path(file_path)?;
+fn get_random_row(file_path: &str, rng: &mut StdRng) -> Result<Bird, Box<dyn std::error::Error>> {
+    let mut rdr = csv::ReaderBuilder::new().has_headers(true).from_path(file_path)?;
 
     let mut records: Vec<Bird> = Vec::new();
 
@@ -37,19 +35,23 @@ fn get_random_row(file_path: &str, _seed: usize) -> Result<Bird, Box<dyn Error>>
         return Err("No birds found in the file.".into());
     }
 
-    let mut rng = rand::thread_rng();
-    let random_bird = records.choose(&mut rng).ok_or("Failed to choose a random bird")?;
+    // Choose a random bird using the provided RNG
+    let random_bird = records.choose(rng).ok_or("Failed to choose a random bird")?;
 
     Ok(random_bird.clone()) // Clone the selected bird and return it
 }
 
+
 async fn bird() -> impl Responder {
+    let day_of_year = Utc::now().day() as usize;
+    let current_year = Utc::now().year() as usize;
+    let seed = ((current_year * 1000) + day_of_year) % 50 + 2;
+    //let _rng = StdRng::seed_from_u64(seed as u64);
+    let mut rng = StdRng::seed_from_u64(seed as u64);
     // Generate a random seed for the bird selection
-    let seed: u32 = rand::thread_rng().gen_range(2..=51);
-    //println!("Current directory: {:?}", env::current_dir());
+    //let seed: u32 = rand::thread_rng().gen_range(2..=51);
     // Get a random bird from CSV
-    match get_random_row("./birds.csv", seed as usize) {
-        
+    match get_random_row("./birds.csv", &mut rng) {
         Ok(random_bird) => HttpResponse::Ok().json(random_bird), // Retuxrn the bird as JSON
         Err(e) => HttpResponse::InternalServerError().body(format!("Error retrieving bird data: {}", e)),
     }
