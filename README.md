@@ -1,5 +1,5 @@
 # bird-of-the-instance
-This program displays a new bird, along with a picture and description with every refresh.
+This program displays a new bird, along with a picture and description every day.
 To run locally:
 1. Start backend by running 'cargo run' while in the /front directory.
 2. Start frontend by running 'npm run dev' while in the /back directory. 
