@@ -1,4 +1,4 @@
-# bird-of-the-instance
+# bird-of-the-day
 This program displays a new bird, along with a picture and description every day.
 To run locally:
 1. Start backend by running 'cargo run' while in the /front directory.
